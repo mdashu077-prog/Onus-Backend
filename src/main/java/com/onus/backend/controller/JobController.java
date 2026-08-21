@@ -9,7 +9,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/jobs")
-@CrossOrigin(origins = "http://localhost:5173")
 public class JobController {
 
     private final JobService jobService;
@@ -20,21 +19,31 @@ public class JobController {
 
     @PostMapping
     public ResponseEntity<Job> createJob(@RequestBody Job job) {
-        return ResponseEntity.status(201).body(jobService.createJob(job));
+        return ResponseEntity
+                .status(201)
+                .body(jobService.createJob(job));
     }
 
     @GetMapping
     public ResponseEntity<List<Job>> getAllJobs() {
-        return ResponseEntity.ok(jobService.getAllJobs());
+        return ResponseEntity.ok(
+                jobService.getAllJobs()
+        );
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Job> getJobById(@PathVariable Long id) {
-        return ResponseEntity.ok(jobService.getJobById(id));
+    public ResponseEntity<Job> getJobById(
+            @PathVariable Long id
+    ) {
+        return ResponseEntity.ok(
+                jobService.getJobById(id)
+        );
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteJob(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteJob(
+            @PathVariable Long id
+    ) {
         jobService.deleteJob(id);
         return ResponseEntity.noContent().build();
     }
