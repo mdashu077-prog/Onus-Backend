@@ -17,52 +17,38 @@ import java.io.IOException;
 import java.util.List;
 
 @Component
-public class JwtAuthenticationFilter
-        extends OncePerRequestFilter {
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
 
-    public JwtAuthenticationFilter(
-            JwtService jwtService
-    ) {
+    public JwtAuthenticationFilter(JwtService jwtService) {
         this.jwtService = jwtService;
     }
 
     @Override
-    protected boolean shouldNotFilter(
-            HttpServletRequest request
-    ) {
+    protected boolean shouldNotFilter(HttpServletRequest request) {
 
         String path = request.getServletPath();
         String method = request.getMethod();
 
-        // ==========================================
-        // CORS PREFLIGHT
-        // ==========================================
+        // CORS preflight
         if ("OPTIONS".equalsIgnoreCase(method)) {
             return true;
         }
 
-        // ==========================================
-        // PUBLIC AUTH ENDPOINTS
-        // ==========================================
-        if (
-                path.equals("/api/login") ||
-                        path.equals("/api/register")
-        ) {
+        // Public authentication APIs
+        if (path.equals("/api/login")
+                || path.equals("/api/register")) {
             return true;
         }
 
-        // ==========================================
-        // PUBLIC JOB ENDPOINTS
-        // ==========================================
-        if (
-                method.equalsIgnoreCase("GET") &&
-                        (
-                                path.equals("/api/jobs") ||
-                                        path.startsWith("/api/jobs/")
-                        )
-        ) {
+        // Public GET job APIs
+        // IMPORTANT:
+        // POST /api/jobs will NOT be skipped.
+        // Therefore recruiter authentication will still work for creating jobs.
+        if ("GET".equalsIgnoreCase(method)
+                && (path.equals("/api/jobs")
+                || path.startsWith("/api/jobs/"))) {
             return true;
         }
 
@@ -76,58 +62,36 @@ public class JwtAuthenticationFilter
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        String authHeader =
-                request.getHeader("Authorization");
+        String authHeader = request.getHeader("Authorization");
 
-        // No JWT token
-        if (
-                authHeader == null ||
-                        !authHeader.startsWith("Bearer ")
-        ) {
-            filterChain.doFilter(
-                    request,
-                    response
-            );
+        // No Authorization header
+        if (authHeader == null
+                || !authHeader.startsWith("Bearer ")) {
+
+            filterChain.doFilter(request, response);
             return;
         }
 
-        String token =
-                authHeader.substring(7);
+        String token = authHeader.substring(7);
 
         try {
 
-            // ==========================================
-            // VALIDATE TOKEN
-            // ==========================================
+            // Invalid token
             if (!jwtService.isTokenValid(token)) {
-                filterChain.doFilter(
-                        request,
-                        response
-                );
+                filterChain.doFilter(request, response);
                 return;
             }
 
-            // ==========================================
-            // EXTRACT USER DETAILS
-            // ==========================================
-            String email =
-                    jwtService.extractEmail(token);
+            String email = jwtService.extractEmail(token);
+            String role = jwtService.extractRole(token);
 
-            String role =
-                    jwtService.extractRole(token);
-
-            // ==========================================
-            // SET AUTHENTICATION
-            // ==========================================
-            if (
-                    email != null &&
-                            !email.isBlank() &&
-                            role != null &&
-                            !role.isBlank() &&
-                            SecurityContextHolder
-                                    .getContext()
-                                    .getAuthentication() == null
-            ) {
+            if (email != null
+                    && !email.isBlank()
+                    && role != null
+                    && !role.isBlank()
+                    && SecurityContextHolder
+                    .getContext()
+                    .getAuthentication() == null) {
 
                 SimpleGrantedAuthority authority =
                         new SimpleGrantedAuthority(role);
@@ -141,9 +105,7 @@ public class JwtAuthenticationFilter
 
                 SecurityContextHolder
                         .getContext()
-                        .setAuthentication(
-                                authentication
-                        );
+                        .setAuthentication(authentication);
             }
 
         } catch (Exception e) {
@@ -153,9 +115,7 @@ public class JwtAuthenticationFilter
             );
         }
 
-        filterChain.doFilter(
-                request,
-                response
-        );
+        filterChain.doFilter(request, response);
     }
 }
+

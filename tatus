@@ -1,0 +1,39 @@
+[33mcommit d22a76226eed5d7c376bcec348b820e10665e9f9[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Ashraf <mdashu077@gmail.com>
+Date:   Fri Aug 21 18:32:54 2026 +0530
+
+    Fix job controller CORS
+
+M	src/main/java/com/onus/backend/config/SecurityConfig.java
+
+[33mcommit 92b17f40aac2a020e61d717d86cf3a3a41260c30[m
+Author: Ashraf <mdashu077@gmail.com>
+Date:   Fri Aug 21 18:17:50 2026 +0530
+
+    Fix production CORS and security configuration
+
+M	src/main/java/com/onus/backend/config/SecurityConfig.java
+
+[33mcommit a4408755f8cddf055e98e57393ebc8960a856800[m
+Author: Ashraf <mdashu077@gmail.com>
+Date:   Fri Aug 21 18:13:17 2026 +0530
+
+    Fix CORS for Vercel frontend
+
+M	src/main/java/com/onus/backend/config/SecurityConfig.java
+
+[33mcommit 8f9383f4c3a814001fa8b5e3e65f7121f6449840[m
+Author: Ashraf <mdashu077@gmail.com>
+Date:   Fri Aug 21 18:08:37 2026 +0530
+
+    Fix CORS for production frontend
+
+M	src/main/java/com/onus/backend/config/SecurityConfig.java
+
+[33mcommit dbe58286a9b737544d04b67b670c0dcb0a6b18a9[m
+Author: Ashraf <mdashu077@gmail.com>
+Date:   Thu Aug 20 10:37:26 2026 +0530
+
+    Add ONUS backend
+
+A	src/main/java/com/onus/backend/config/SecurityConfig.java
