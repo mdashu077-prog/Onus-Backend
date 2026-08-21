@@ -25,8 +25,7 @@ public class JwtAuthenticationFilter
     public JwtAuthenticationFilter(
             JwtService jwtService
     ) {
-        this.jwtService =
-                jwtService;
+        this.jwtService = jwtService;
     }
 
     @Override
@@ -34,9 +33,19 @@ public class JwtAuthenticationFilter
             HttpServletRequest request
     ) {
 
-        String path =
-                request.getServletPath();
+        String path = request.getServletPath();
+        String method = request.getMethod();
 
+        // ==========================================
+        // CORS PREFLIGHT
+        // ==========================================
+        if ("OPTIONS".equalsIgnoreCase(method)) {
+            return true;
+        }
+
+        // ==========================================
+        // PUBLIC AUTH ENDPOINTS
+        // ==========================================
         if (
                 path.equals("/api/login") ||
                         path.equals("/api/register")
@@ -44,10 +53,15 @@ public class JwtAuthenticationFilter
             return true;
         }
 
+        // ==========================================
+        // PUBLIC JOB ENDPOINTS
+        // ==========================================
         if (
-                "OPTIONS".equalsIgnoreCase(
-                        request.getMethod()
-                )
+                method.equalsIgnoreCase("GET") &&
+                        (
+                                path.equals("/api/jobs") ||
+                                        path.startsWith("/api/jobs/")
+                        )
         ) {
             return true;
         }
@@ -63,15 +77,12 @@ public class JwtAuthenticationFilter
     ) throws ServletException, IOException {
 
         String authHeader =
-                request.getHeader(
-                        "Authorization"
-                );
+                request.getHeader("Authorization");
 
+        // No JWT token
         if (
                 authHeader == null ||
-                        !authHeader.startsWith(
-                                "Bearer "
-                        )
+                        !authHeader.startsWith("Bearer ")
         ) {
             filterChain.doFilter(
                     request,
@@ -85,11 +96,10 @@ public class JwtAuthenticationFilter
 
         try {
 
-            if (
-                    !jwtService.isTokenValid(
-                            token
-                    )
-            ) {
+            // ==========================================
+            // VALIDATE TOKEN
+            // ==========================================
+            if (!jwtService.isTokenValid(token)) {
                 filterChain.doFilter(
                         request,
                         response
@@ -97,16 +107,18 @@ public class JwtAuthenticationFilter
                 return;
             }
 
+            // ==========================================
+            // EXTRACT USER DETAILS
+            // ==========================================
             String email =
-                    jwtService.extractEmail(
-                            token
-                    );
+                    jwtService.extractEmail(token);
 
             String role =
-                    jwtService.extractRole(
-                            token
-                    );
+                    jwtService.extractRole(token);
 
+            // ==========================================
+            // SET AUTHENTICATION
+            // ==========================================
             if (
                     email != null &&
                             !email.isBlank() &&
@@ -114,14 +126,11 @@ public class JwtAuthenticationFilter
                             !role.isBlank() &&
                             SecurityContextHolder
                                     .getContext()
-                                    .getAuthentication()
-                                    == null
+                                    .getAuthentication() == null
             ) {
 
                 SimpleGrantedAuthority authority =
-                        new SimpleGrantedAuthority(
-                                role
-                        );
+                        new SimpleGrantedAuthority(role);
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
@@ -140,8 +149,7 @@ public class JwtAuthenticationFilter
         } catch (Exception e) {
 
             System.err.println(
-                    "JWT Error: "
-                            + e.getMessage()
+                    "JWT Error: " + e.getMessage()
             );
         }
 
