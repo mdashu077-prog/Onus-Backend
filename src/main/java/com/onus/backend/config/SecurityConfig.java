@@ -10,6 +10,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -46,28 +47,40 @@ public class SecurityConfig {
         CorsConfiguration configuration =
                 new CorsConfiguration();
 
+        // Local frontend + deployed Vercel frontend
         configuration.setAllowedOrigins(
                 List.of(
                         "http://localhost:5173",
+                        "http://127.0.0.1:5173",
                         "https://onus-phi.vercel.app"
                 )
         );
 
+        // Allowed HTTP methods
         configuration.setAllowedMethods(
                 List.of(
                         "GET",
                         "POST",
                         "PUT",
                         "DELETE",
+                        "PATCH",
                         "OPTIONS"
                 )
         );
 
+        // Allow all request headers
         configuration.setAllowedHeaders(
                 List.of("*")
         );
 
+        // JWT is sent through Authorization header,
+        // but keeping credentials enabled is fine for this setup.
         configuration.setAllowCredentials(true);
+
+        // Optional response headers
+        configuration.setExposedHeaders(
+                List.of("Authorization")
+        );
 
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
@@ -94,6 +107,7 @@ public class SecurityConfig {
                 // =================================================
                 // CSRF
                 // =================================================
+
                 .csrf(csrf ->
                         csrf.disable()
                 )
@@ -101,6 +115,7 @@ public class SecurityConfig {
                 // =================================================
                 // CORS
                 // =================================================
+
                 .cors(cors ->
                         cors.configurationSource(
                                 corsConfigurationSource()
@@ -110,6 +125,7 @@ public class SecurityConfig {
                 // =================================================
                 // STATELESS JWT SESSION
                 // =================================================
+
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS
@@ -119,69 +135,106 @@ public class SecurityConfig {
                 // =================================================
                 // AUTHORIZATION
                 // =================================================
+
                 .authorizeHttpRequests(auth -> auth
 
+                        // -----------------------------------------
                         // CORS PREFLIGHT
+                        // -----------------------------------------
+
                         .requestMatchers(
                                 HttpMethod.OPTIONS,
                                 "/**"
                         ).permitAll()
 
+                        // -----------------------------------------
                         // LOGIN
+                        // -----------------------------------------
+
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/login"
                         ).permitAll()
 
+                        // -----------------------------------------
                         // REGISTER
+                        // -----------------------------------------
+
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/register"
                         ).permitAll()
 
+                        // -----------------------------------------
                         // VIEW ALL JOBS
+                        // -----------------------------------------
+
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/jobs"
                         ).permitAll()
 
+                        // -----------------------------------------
                         // VIEW JOB DETAILS
+                        // -----------------------------------------
+
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/jobs/**"
                         ).permitAll()
 
-                        // CREATE JOB - RECRUITER ONLY
+                        // -----------------------------------------
+                        // CREATE JOB
+                        // ONLY RECRUITER
+                        // -----------------------------------------
+
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/jobs"
                         ).hasAuthority("recruiter")
 
+                        // -----------------------------------------
                         // APPLY FOR JOB
+                        // LOGIN REQUIRED
+                        // -----------------------------------------
+
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/applications/**"
                         ).authenticated()
 
+                        // -----------------------------------------
                         // CHECK APPLICATION STATUS
+                        // LOGIN REQUIRED
+                        // -----------------------------------------
+
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/applications/check/**"
                         ).authenticated()
 
+                        // -----------------------------------------
                         // MY APPLICATIONS
+                        // LOGIN REQUIRED
+                        // -----------------------------------------
+
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/applications/my"
                         ).authenticated()
 
+                        // -----------------------------------------
                         // EVERYTHING ELSE
+                        // LOGIN REQUIRED
+                        // -----------------------------------------
+
                         .anyRequest().authenticated()
                 )
 
                 // =================================================
                 // JWT FILTER
                 // =================================================
+
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
