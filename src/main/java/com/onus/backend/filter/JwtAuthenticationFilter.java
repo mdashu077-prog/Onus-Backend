@@ -1,4 +1,5 @@
-package com.onus.backend.filter;
+
+        package com.onus.backend.filter;
 
 import com.onus.backend.service.JwtService;
 
@@ -31,23 +32,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getServletPath();
         String method = request.getMethod();
 
-        // CORS preflight
+        /*
+         * ---------------------------------------------------------
+         * CORS PREFLIGHT
+         * ---------------------------------------------------------
+         */
         if ("OPTIONS".equalsIgnoreCase(method)) {
             return true;
         }
 
-        // Public authentication APIs
-        if (path.equals("/api/login")
-                || path.equals("/api/register")) {
+        /*
+         * ---------------------------------------------------------
+         * PUBLIC AUTH APIs
+         * ---------------------------------------------------------
+         */
+        if ("/api/login".equals(path)
+                || "/api/register".equals(path)) {
             return true;
         }
 
-        // Public GET job APIs
-        // IMPORTANT:
-        // POST /api/jobs will NOT be skipped.
-        // Therefore recruiter authentication will still work for creating jobs.
+        /*
+         * ---------------------------------------------------------
+         * PUBLIC JOB APIs
+         *
+         * GET /api/jobs
+         * GET /api/jobs/1
+         * GET /api/jobs/anything
+         *
+         * These endpoints are public.
+         * POST /api/jobs is NOT skipped.
+         * ---------------------------------------------------------
+         */
         if ("GET".equalsIgnoreCase(method)
-                && (path.equals("/api/jobs")
+                && ("/api/jobs".equals(path)
                 || path.startsWith("/api/jobs/"))) {
             return true;
         }
@@ -64,7 +81,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
-        // No Authorization header
+        /*
+         * ---------------------------------------------------------
+         * NO TOKEN
+         *
+         * Do not immediately return 403 here.
+         * Spring Security will decide whether the endpoint
+         * requires authentication.
+         * ---------------------------------------------------------
+         */
         if (authHeader == null
                 || !authHeader.startsWith("Bearer ")) {
 
@@ -72,19 +97,42 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String token = authHeader.substring(7);
+        String token = authHeader.substring(7).trim();
+
+        /*
+         * Empty token
+         */
+        if (token.isEmpty()) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         try {
 
-            // Invalid token
+            /*
+             * -----------------------------------------------------
+             * VALIDATE JWT
+             * -----------------------------------------------------
+             */
             if (!jwtService.isTokenValid(token)) {
+                System.err.println("JWT Error: Invalid token");
                 filterChain.doFilter(request, response);
                 return;
             }
 
+            /*
+             * -----------------------------------------------------
+             * EXTRACT USER INFORMATION
+             * -----------------------------------------------------
+             */
             String email = jwtService.extractEmail(token);
             String role = jwtService.extractRole(token);
 
+            /*
+             * -----------------------------------------------------
+             * CREATE AUTHENTICATION
+             * -----------------------------------------------------
+             */
             if (email != null
                     && !email.isBlank()
                     && role != null
@@ -106,10 +154,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder
                         .getContext()
                         .setAuthentication(authentication);
+
+                System.out.println(
+                        "JWT authenticated user: "
+                                + email
+                                + " | role: "
+                                + role
+                );
             }
 
         } catch (Exception e) {
 
+            /*
+             * -----------------------------------------------------
+             * JWT FAILURE
+             *
+             * Do not manually send 403.
+             * Let Spring Security handle protected endpoints.
+             * -----------------------------------------------------
+             */
             System.err.println(
                     "JWT Error: " + e.getMessage()
             );
