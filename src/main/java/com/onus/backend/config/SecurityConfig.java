@@ -48,7 +48,8 @@ public class SecurityConfig {
 
         configuration.setAllowedOrigins(
                 List.of(
-                        "http://localhost:5173"
+                        "http://localhost:5173",
+                        "https://onus-phi.vercel.app"
                 )
         );
 
@@ -120,86 +121,61 @@ public class SecurityConfig {
                 // =================================================
                 .authorizeHttpRequests(auth -> auth
 
-                        // -----------------------------------------
                         // CORS PREFLIGHT
-                        // -----------------------------------------
                         .requestMatchers(
                                 HttpMethod.OPTIONS,
                                 "/**"
                         ).permitAll()
 
-                        // -----------------------------------------
                         // LOGIN
-                        // -----------------------------------------
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/login"
                         ).permitAll()
 
-                        // -----------------------------------------
                         // REGISTER
-                        // -----------------------------------------
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/register"
                         ).permitAll()
 
-                        // -----------------------------------------
                         // VIEW ALL JOBS
-                        // -----------------------------------------
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/jobs"
                         ).permitAll()
 
-                        // -----------------------------------------
                         // VIEW JOB DETAILS
-                        // -----------------------------------------
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/jobs/**"
                         ).permitAll()
 
-                        // -----------------------------------------
-                        // CREATE JOB
-                        // ONLY RECRUITER
-                        // -----------------------------------------
+                        // CREATE JOB - RECRUITER ONLY
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/jobs"
                         ).hasAuthority("recruiter")
 
-                        // -----------------------------------------
                         // APPLY FOR JOB
-                        // LOGIN REQUIRED
-                        // -----------------------------------------
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/applications/**"
                         ).authenticated()
 
-                        // -----------------------------------------
                         // CHECK APPLICATION STATUS
-                        // LOGIN REQUIRED
-                        // -----------------------------------------
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/applications/check/**"
                         ).authenticated()
 
-                        // -----------------------------------------
                         // MY APPLICATIONS
-                        // LOGIN REQUIRED
-                        // -----------------------------------------
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/applications/my"
                         ).authenticated()
 
-                        // -----------------------------------------
                         // EVERYTHING ELSE
-                        // LOGIN REQUIRED
-                        // -----------------------------------------
                         .anyRequest().authenticated()
                 )
 
